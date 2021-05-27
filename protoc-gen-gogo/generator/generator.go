@@ -1305,6 +1305,7 @@ func (g *Generator) generateHeader() {
 	g.P()
 	g.PrintComments(strconv.Itoa(packagePath))
 	g.P()
+	g.printPackageDoc()
 	g.P("package ", g.file.packageName)
 	g.P()
 }
@@ -1353,6 +1354,40 @@ func (g *Generator) Comments(path string) string {
 	}
 	text := strings.TrimSuffix(loc.GetLeadingComments(), "\n")
 	return text
+}
+
+func (g *Generator) printPackageDoc() {
+	g.P("/*")
+	g.P("Package ", g.file.packageName, " is a generated protocol buffer package.")
+	g.P()
+	if loc, ok := g.file.comments[strconv.Itoa(packagePath)]; ok {
+		// not using g.PrintComments because this is a /* */ comment block.
+		text := strings.TrimSuffix(loc.GetLeadingComments(), "\n")
+		for _, line := range strings.Split(text, "\n") {
+			line = strings.TrimPrefix(line, " ")
+			// ensure we don't escape from the block comment
+			line = strings.Replace(line, "*/", "* /", -1)
+			g.P(line)
+		}
+		g.P()
+	}
+	var topMsgs []string
+	g.P("It is generated from these files:")
+	for _, f := range g.genFiles {
+		g.P("\t", f.Name)
+		for _, msg := range f.desc {
+			if msg.parent != nil {
+				continue
+			}
+			topMsgs = append(topMsgs, CamelCaseSlice(msg.TypeName()))
+		}
+	}
+	g.P()
+	g.P("It has these top-level messages:")
+	for _, msg := range topMsgs {
+		g.P("\t", msg)
+	}
+	g.P("*/")
 }
 
 func (g *Generator) fileByName(filename string) *FileDescriptor {
