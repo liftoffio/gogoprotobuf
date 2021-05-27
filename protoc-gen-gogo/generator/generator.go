@@ -1305,6 +1305,7 @@ func (g *Generator) generateHeader() {
 	g.P()
 	g.PrintComments(strconv.Itoa(packagePath))
 	g.P()
+	g.P("// Package ", g.file.packageName, " is a generated protocol buffer package.")
 	g.P("package ", g.file.packageName)
 	g.P()
 }
